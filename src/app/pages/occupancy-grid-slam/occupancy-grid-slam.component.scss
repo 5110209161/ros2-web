@@ -1,0 +1,14 @@
+canvas {
+  border: 1px dotted black;
+  background-color: #eeeeee;
+}
+
+div#controlsCont div {
+  display: inline-block;
+  width: 10%;
+  height: 40px;
+  line-height: 40px;
+  text-align: center;
+  border: 1px solid black;
+  cursor: pointer;
+}
