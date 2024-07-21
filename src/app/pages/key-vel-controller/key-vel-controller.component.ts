@@ -1,0 +1,122 @@
+import { AfterViewInit, Component, OnDestroy, OnInit } from '@angular/core';
+import { fromEvent, Subscription } from 'rxjs';
+
+@Component({
+  selector: 'app-key-vel-controller',
+  standalone: true,
+  imports: [],
+  templateUrl: './key-vel-controller.component.html',
+  styleUrl: './key-vel-controller.component.scss'
+})
+export class KeyVelControllerComponent implements OnInit, OnDestroy, AfterViewInit {
+
+  angularVelocity = 0;  // angular velocity of the robot
+  linearVelocity = 0;  // linear velocity of the robot
+
+  maxAngularVelocity = 1.0;  // max angular velocity
+  maxLinearVelocity = 1.0;  // max linear velocity
+
+  keyStates = {};  // status of each (keyboard) key
+
+  robotTurnRate = 10 * (Math.PI / 180);  // robot turn rate, in radians per second
+  robotMoveRate = 0.1; // robot move rate, in meters per second
+
+  keyupSubscription: Subscription;
+  keydownSubscription: Subscription;
+
+  constructor() {}
+
+  ngOnInit(): void {
+    this.addKeyPressSubscriber();
+  }
+
+  ngAfterViewInit(): void {
+    this.tick();
+  }
+
+  ngOnDestroy(): void {
+    this.removeKeyPressSubscriber();
+  }
+
+  /**
+   * Subscribe keyup and key down event
+   */
+  private addKeyPressSubscriber(): void {
+    this.keyupSubscription = fromEvent(document, 'keyup').subscribe((keyEvent: KeyboardEvent) => {
+      this.keyupHandler(keyEvent);
+    });
+    this.keydownSubscription = fromEvent(document, 'keydown').subscribe((keyEvent: KeyboardEvent) => {
+      this.keydownHandler(keyEvent);
+    });
+  }
+
+  /**
+   * Unsubscribe key press event
+   */
+  private removeKeyPressSubscriber(): void {
+    this.keyupSubscription.unsubscribe();
+    this.keydownSubscription.unsubscribe();
+  }
+
+  private keyupHandler(event: KeyboardEvent) {
+    let keyId = event.which;  // which = keyCode
+    this.keyStates[keyId] = false;
+  }
+
+  private keydownHandler(event: KeyboardEvent) {
+    let keyId = event.which;
+    this.keyStates[keyId] = true;
+  }
+
+  private tick(): void {
+    let dt = 1000 / 60;  // 60 frames per second
+    this.keyVelController(dt);
+    console.log('linear velocity: ', this.linearVelocity, 'angular velocity: ', this.angularVelocity);
+    requestAnimationFrame(() => { this.tick() });
+  }
+
+  /**
+   * Run in every tick loop, based on the keys that are being pressed
+   * @param dt 
+   */
+  private keyVelController(dt: number): void {
+    let upKey = 87; // W
+    let leftKey = 65; // A
+    let downKey = 83;  // S
+    let rightKey = 68;  // D
+
+    let ds = dt / 1000;  // change time in seconds
+
+    // handle angular velocity change
+    if ((!!this.keyStates[leftKey]) && !this.keyStates[rightKey]) {
+      // turning left and not right
+      this.angularVelocity += ds * this.robotTurnRate;;
+      if (this.angularVelocity >= this.maxAngularVelocity) {
+        this.angularVelocity = this.maxAngularVelocity;
+      }
+    }
+    else if (!this.keyStates[leftKey] && (!!this.keyStates[rightKey])) {
+      // turning right and not left
+      this.angularVelocity += ds * this.robotTurnRate * -1;
+      if (this.angularVelocity <= -this.maxAngularVelocity) {
+        this.angularVelocity = -this.maxAngularVelocity;
+      }
+    }
+
+    // handle linear velocity change
+    if((!!this.keyStates[upKey]) && !this.keyStates[downKey]) {
+      // go forward
+      this.linearVelocity += ds * this.robotMoveRate;
+      if (this.linearVelocity >= this.maxLinearVelocity) {
+        this.linearVelocity = this.maxLinearVelocity;
+      }
+    }
+    
+    if (!!this.keyStates[downKey]) {
+      // stop
+      this.linearVelocity = 0;
+      this.angularVelocity = 0;
+    }
+  }
+
+}
