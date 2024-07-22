@@ -1,5 +1,6 @@
 import { AfterViewInit, Component, OnDestroy, OnInit } from '@angular/core';
-import { fromEvent, Subscription } from 'rxjs';
+import { fromEvent, Subject, Subscription } from 'rxjs';
+import { RosDataService } from '../../services/ros-data.service';
 
 @Component({
   selector: 'app-key-vel-controller',
@@ -24,10 +25,18 @@ export class KeyVelControllerComponent implements OnInit, OnDestroy, AfterViewIn
   keyupSubscription: Subscription;
   keydownSubscription: Subscription;
 
-  constructor() {}
+  destroy$ = new Subject<void>();
+
+  constructor(
+    private rosDataService: RosDataService
+  ) {}
 
   ngOnInit(): void {
     this.addKeyPressSubscriber();
+
+    this.rosDataService.subscribe('/number', 'std_msgs/msg/Int64', (msg) => {
+      console.log("Received message: ", msg);
+    });
   }
 
   ngAfterViewInit(): void {
@@ -36,6 +45,9 @@ export class KeyVelControllerComponent implements OnInit, OnDestroy, AfterViewIn
 
   ngOnDestroy(): void {
     this.removeKeyPressSubscriber();
+
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   /**
@@ -69,9 +81,9 @@ export class KeyVelControllerComponent implements OnInit, OnDestroy, AfterViewIn
   }
 
   private tick(): void {
-    let dt = 1000 / 60;  // 60 frames per second
+    let dt = 1000 / 20;  // 20 frames per second
     this.keyVelController(dt);
-    console.log('linear velocity: ', this.linearVelocity, 'angular velocity: ', this.angularVelocity);
+    this.publishVelocities();
     requestAnimationFrame(() => { this.tick() });
   }
 
@@ -117,6 +129,26 @@ export class KeyVelControllerComponent implements OnInit, OnDestroy, AfterViewIn
       this.linearVelocity = 0;
       this.angularVelocity = 0;
     }
+  }
+
+  private publishVelocities(): void {
+    let twistedStampedVel = {
+      header: {
+        stamp: {
+          sec: 0, nanosec: 0
+        },
+        frame_id: '',
+      },
+      twist: {
+        linear: {
+          x: this.linearVelocity, y: 0, z: 0
+        },
+        angular: {
+          x: 0, y: 0, z: this.angularVelocity
+        }
+      }
+    };
+    this.rosDataService.publish('compositebot_controller/cmd_vel', 'geometry_msgs/msg/TwistStamped', twistedStampedVel);
   }
 
 }
