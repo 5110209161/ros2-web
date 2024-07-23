@@ -60,7 +60,7 @@ export class KeyVelControllerComponent implements OnInit, OnDestroy, AfterViewIn
       this.mousePosY = Math.round(e.clientY - cRect.top);   // from the X/Y positions to make  
     });
 
-    this.viewRosMap();
+    this.rosDataService.viewRosMap('map');
 
     // this.tick();
   }
@@ -70,24 +70,6 @@ export class KeyVelControllerComponent implements OnInit, OnDestroy, AfterViewIn
 
     this.destroy$.next();
     this.destroy$.complete();
-  }
-
-  private viewRosMap(): void {
-    let viewer = new ROS2D.Viewer({
-      divID: 'map',
-      width: 800,
-      height: 600
-    });
-
-    let gridClient = new ROS2D.OccupancyGridClient({
-      ros: this.rosDataService.rosServer,
-      rootObject: viewer.scene
-    });
-
-    gridClient.on('change', () => {
-      viewer.scaleToDimensions(gridClient.currentGrid.width, gridClient.currentGrid.height);
-      viewer.shift(gridClient.currentGrid.pose.position.x, gridClient.currentGrid.pose.position.y);
-    });
   }
 
   /**

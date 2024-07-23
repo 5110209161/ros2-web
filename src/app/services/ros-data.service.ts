@@ -6,7 +6,7 @@ import { environment } from '../../environment/environment';
 })
 export class RosDataService {
 
-  public rosServer;
+  private rosServer;
 
   constructor() { 
     this.rosServer = new ROSLIB.Ros({
@@ -26,6 +26,12 @@ export class RosDataService {
     });
   }
 
+  /**
+   * Publish ROS topic
+   * @param topic 
+   * @param msgType 
+   * @param msg 
+   */
   publish(topic: string, msgType: string, msg: any): void {
     if (!this.rosServer) {
       throw Error('ROS server not connected');
@@ -41,6 +47,12 @@ export class RosDataService {
     topicPublisher.publish(message);
   }
 
+  /**
+   * Subscribe ROS topic
+   * @param topic 
+   * @param msgType 
+   * @param callback 
+   */
   subscribe(topic: string, msgType: string, callback: (msg: any) => void): void {
     if (!this.rosServer) {
       throw Error('ROS server not connected');
@@ -54,6 +66,28 @@ export class RosDataService {
 
     topicSubscriber.subscribe((message) => {
       callback(message);
+    });
+  }
+
+  /**
+   * Render ROS map
+   * @param divId 
+   */
+  viewRosMap(divId: string): void {
+    let viewer = new ROS2D.Viewer({
+      divID: divId,
+      width: 800,
+      height: 600
+    });
+
+    let gridClient = new ROS2D.OccupancyGridClient({
+      ros: this.rosServer,
+      rootObject: viewer.scene
+    });
+
+    gridClient.on('change', () => {
+      viewer.scaleToDimensions(gridClient.currentGrid.width, gridClient.currentGrid.height);
+      viewer.shift(gridClient.currentGrid.pose.position.x, gridClient.currentGrid.pose.position.y);
     });
   }
 }
