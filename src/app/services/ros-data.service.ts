@@ -8,6 +8,8 @@ import * as createjs from 'createjs-module';
 export class RosDataService {
 
   private rosServer;
+  private viewer;
+  private gridClient;
 
   constructor() { 
     this.rosServer = new ROSLIB.Ros({
@@ -80,28 +82,29 @@ export class RosDataService {
       throw Error('ROS server not connected');
     }
 
-    let viewer = new ROS2D.Viewer({
+    this.viewer = new ROS2D.Viewer({
       divID: divId,
       width: width,
       height: height
     });
 
-    let gridClient = new ROS2D.OccupancyGridClient({
+    this.gridClient = new ROS2D.OccupancyGridClient({
       ros: this.rosServer,
-      rootObject: viewer.scene,
+      rootObject: this.viewer.scene,
       continuous: true  //Use this property in case of continuous updates
     });
 
-    gridClient.on('change', () => {
-      viewer.scaleToDimensions(gridClient.currentGrid.width, gridClient.currentGrid.height);
-      viewer.shift(gridClient.currentGrid.pose.position.x, gridClient.currentGrid.pose.position.y);
+    this.gridClient.on('change', () => {
+      this.viewer.scaleToDimensions(this.gridClient.currentGrid.width, this.gridClient.currentGrid.height);
+      this.viewer.shift(this.gridClient.currentGrid.pose.position.x, this.gridClient.currentGrid.pose.position.y);
     });
 
     let robotMarker = new ROS2D.NavigationArrow({
       size: 0.25,
       strokeSize: 0.05,
       pulse: true,
-      fillColor: createjs.Graphics.getRGB(255, 0, 0, 0.65)
+      fillColor: createjs.Graphics.getRGB(255, 0, 0, 0.65),
+      strokeColor: createjs.Graphics.getRGB(255, 0, 0, 0.65)
     });
 
     let robotPosition = new ROSLIB.Topic({
@@ -123,6 +126,25 @@ export class RosDataService {
       robotMarker.rotation = degreeZ;
     });
 
-    gridClient.rootObject.addChild(robotMarker);
+    this.gridClient.rootObject.addChild(robotMarker);
+  }
+
+  addWaypoint(x: any, y: any, z: any): void {
+    if (!this.rosServer || !this.viewer) {
+      throw Error('ROS server not connected or viewer not initialized');
+    }
+
+    let waypointMarker = new ROS2D.NavigationArrow({
+      size: 0.1,
+      strokeSize: 0.1,
+      pulse: true,
+      strokeColor : createjs.Graphics.getRGB(0, 0, 255),
+      fillColor: createjs.Graphics.getRGB(0, 0, 255, 0.35)
+    });
+
+    waypointMarker.x = x;
+    waypointMarker.y = -y;
+    waypointMarker.rotation = z;
+    this.gridClient.rootObject.addChild(waypointMarker);
   }
 }

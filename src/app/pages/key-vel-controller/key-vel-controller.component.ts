@@ -93,6 +93,7 @@ export class KeyVelControllerComponent implements OnInit, OnDestroy, AfterViewIn
       y: this.robotPosY || '0',
       z: this.robotPosZ || '0',
     });
+    this.rosDataService.addWaypoint(this.robotPosX, this.robotPosY, this.robotPosZ);
   }
 
   private subscribeRobotPose() {
