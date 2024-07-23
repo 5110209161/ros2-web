@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, OnDestroy, OnInit } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { fromEvent, Subject, Subscription } from 'rxjs';
 import { RosDataService } from '../../services/ros-data.service';
 import * as ROS2D from 'ros2d/build/ros2d';
@@ -28,20 +28,40 @@ export class KeyVelControllerComponent implements OnInit, OnDestroy, AfterViewIn
 
   destroy$ = new Subject<void>();
 
+  @ViewChild('canvas') private canvasRef: ElementRef;
+  private get canvas(): HTMLCanvasElement {
+    return this.canvasRef.nativeElement;
+  }
+
+  mousePosX: number = 0;
+  mousePosY: number = 0;
+
   constructor(
     private rosDataService: RosDataService
   ) {}
 
   ngOnInit(): void {
-    this.addKeyPressSubscriber();
-
-    this.rosDataService.subscribe('/number', 'std_msgs/msg/Int64', (msg) => {
-      console.log("Received message: ", msg);
-    });
+    // this.addKeyPressSubscriber();
   }
 
   ngAfterViewInit(): void {
-    this.tick();
+    const ctx = this.canvas.getContext('2d');
+    let img = new Image();
+    img.src = "/assets/zuljin.jpg";
+    img.onload = () => {
+      // https://developer.mozilla.org/en-US/docs/Web/API/Canvas_API/Tutorial/Using_images
+      // ctx.drawImage(img, 0, 0, img.width, img.height, 0, 0, img.width, img.height);
+      ctx.drawImage(img, 0, 0, img.width, img.height);
+      let pattern = ctx.createPattern(img, 'no-repeat');
+      ctx.fillStyle = pattern;
+    };
+    this.canvas.addEventListener('mousemove', (e) => {
+      let cRect = this.canvas.getBoundingClientRect();  // get width height
+      this.mousePosX = Math.round(e.clientX - cRect.left);  // Subtract the 'left' of the canvas
+      this.mousePosY = Math.round(e.clientY - cRect.top);   // from the X/Y positions to make  
+    });
+
+    // this.tick();
   }
 
   ngOnDestroy(): void {
