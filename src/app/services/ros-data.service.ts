@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { environment } from '../../environment/environment';
+import * as createjs from 'createjs-module';
 
 @Injectable({
   providedIn: 'root'
@@ -73,21 +74,55 @@ export class RosDataService {
    * Render ROS map
    * @param divId 
    */
-  viewRosMap(divId: string): void {
+  viewRosMap(divId: string, width: number = 800, height: number = 600): void {
+    if (!this.rosServer) {
+      throw Error('ROS server not connected');
+    }
+
     let viewer = new ROS2D.Viewer({
       divID: divId,
-      width: 800,
-      height: 600
+      width: width,
+      height: height
     });
 
     let gridClient = new ROS2D.OccupancyGridClient({
       ros: this.rosServer,
-      rootObject: viewer.scene
+      rootObject: viewer.scene,
+      continuous: true  //Use this property in case of continuous updates
     });
 
     gridClient.on('change', () => {
       viewer.scaleToDimensions(gridClient.currentGrid.width, gridClient.currentGrid.height);
       viewer.shift(gridClient.currentGrid.pose.position.x, gridClient.currentGrid.pose.position.y);
     });
+
+    let robotMarker = new ROS2D.NavigationArrow({
+      size: 0.25,
+      strokeSize: 0.05,
+      pulse: true,
+      fillColor: createjs.Graphics.getRGB(255, 0, 0, 0.65)
+    });
+
+    let robotPosition = new ROSLIB.Topic({
+      ros: this.rosServer,
+      name: '/amcl_pose',
+      messageType: 'geometry_msgs/PoseWithCovarianceStamped'
+    });
+
+    robotPosition.subscribe((pose) => {
+      robotMarker.x = pose.pose.pose.position.x;
+      robotMarker.y = -pose.pose.pose.position.y;
+      let quaZ = pose.pose.pose.orientation.z;
+      let degreeZ = 0;
+      if (quaZ >= 0) {
+        degreeZ = quaZ / 1 * 180;
+      } else {
+        degreeZ = (-quaZ / 1 * 180) + 180;
+      }
+      robotMarker.rotation = degreeZ;
+    });
+
+    gridClient.rootObject.addChild(robotMarker);
   }
+
 }
