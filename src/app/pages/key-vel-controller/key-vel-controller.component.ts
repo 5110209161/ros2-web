@@ -1,7 +1,6 @@
 import { AfterViewInit, Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { fromEvent, Subject, Subscription } from 'rxjs';
 import { RosDataService } from '../../services/ros-data.service';
-import * as ROS2D from 'ros2d/build/ros2d';
 
 @Component({
   selector: 'app-key-vel-controller',
@@ -61,6 +60,8 @@ export class KeyVelControllerComponent implements OnInit, OnDestroy, AfterViewIn
       this.mousePosY = Math.round(e.clientY - cRect.top);   // from the X/Y positions to make  
     });
 
+    this.viewRosMap();
+
     // this.tick();
   }
 
@@ -69,6 +70,24 @@ export class KeyVelControllerComponent implements OnInit, OnDestroy, AfterViewIn
 
     this.destroy$.next();
     this.destroy$.complete();
+  }
+
+  private viewRosMap(): void {
+    let viewer = new ROS2D.Viewer({
+      divID: 'map',
+      width: 800,
+      height: 600
+    });
+
+    let gridClient = new ROS2D.OccupancyGridClient({
+      ros: this.rosDataService.rosServer,
+      rootObject: viewer.scene
+    });
+
+    gridClient.on('change', () => {
+      viewer.scaleToDimensions(gridClient.currentGrid.width, gridClient.currentGrid.height);
+      viewer.shift(gridClient.currentGrid.pose.position.x, gridClient.currentGrid.pose.position.y);
+    });
   }
 
   /**

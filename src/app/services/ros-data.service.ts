@@ -1,13 +1,12 @@
 import { Injectable } from '@angular/core';
 import { environment } from '../../environment/environment';
-import * as ROSLIB from 'roslib';
 
 @Injectable({
   providedIn: 'root'
 })
 export class RosDataService {
 
-  private rosServer;
+  public rosServer;
 
   constructor() { 
     this.rosServer = new ROSLIB.Ros({

@@ -32,7 +32,12 @@
             "styles": [
               "src/styles.scss"
             ],
-            "scripts": []
+            "scripts": [
+              "src/assets/scripts/easeljs/lib/easeljs.min.js",
+              "src/assets/scripts/eventemitter2/lib/eventemitter2.js",
+              "src/assets/scripts/roslib/build/roslib.min.js",
+              "src/assets/scripts/ros2d/build/ros2d.js"
+            ]
           },
           "configurations": {
             "production": {
