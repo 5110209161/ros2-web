@@ -1,5 +1,5 @@
 import { AfterViewInit, Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { fromEvent, Subject, Subscription } from 'rxjs';
+import { fromEvent, map, Subject, Subscription } from 'rxjs';
 import { RosDataService } from '../../services/ros-data.service';
 
 @Component({
@@ -35,34 +35,40 @@ export class KeyVelControllerComponent implements OnInit, OnDestroy, AfterViewIn
   mousePosX: number = 0;
   mousePosY: number = 0;
 
+  robotPosX: number = 0;
+  robotPosY: number = 0;
+  robotPosZ: number = 0;
+
   constructor(
     private rosDataService: RosDataService
   ) {}
 
   ngOnInit(): void {
-    // this.addKeyPressSubscriber();
+    this.addKeyPressSubscriber();
   }
 
   ngAfterViewInit(): void {
-    const ctx = this.canvas.getContext('2d');
-    let img = new Image();
-    img.src = "/assets/zuljin.jpg";
-    img.onload = () => {
-      // https://developer.mozilla.org/en-US/docs/Web/API/Canvas_API/Tutorial/Using_images
-      // ctx.drawImage(img, 0, 0, img.width, img.height, 0, 0, img.width, img.height);
-      ctx.drawImage(img, 0, 0, img.width, img.height);
-      let pattern = ctx.createPattern(img, 'no-repeat');
-      ctx.fillStyle = pattern;
-    };
-    this.canvas.addEventListener('mousemove', (e) => {
-      let cRect = this.canvas.getBoundingClientRect();  // get width height
-      this.mousePosX = Math.round(e.clientX - cRect.left);  // Subtract the 'left' of the canvas
-      this.mousePosY = Math.round(e.clientY - cRect.top);   // from the X/Y positions to make  
-    });
+    // const ctx = this.canvas.getContext('2d');
+    // let img = new Image();
+    // img.src = "/assets/zuljin.jpg";
+    // img.onload = () => {
+    //   // https://developer.mozilla.org/en-US/docs/Web/API/Canvas_API/Tutorial/Using_images
+    //   // ctx.drawImage(img, 0, 0, img.width, img.height, 0, 0, img.width, img.height);
+    //   ctx.drawImage(img, 0, 0, img.width, img.height);
+    //   let pattern = ctx.createPattern(img, 'no-repeat');
+    //   ctx.fillStyle = pattern;
+    // };
+    // this.canvas.addEventListener('mousemove', (e) => {
+    //   let cRect = this.canvas.getBoundingClientRect();  // get width height
+    //   this.mousePosX = Math.round(e.clientX - cRect.left);  // Subtract the 'left' of the canvas
+    //   this.mousePosY = Math.round(e.clientY - cRect.top);   // from the X/Y positions to make  
+    // });
 
     this.rosDataService.viewRosMap('map');
 
-    // this.tick();
+    this.subscribeRobotPose();
+
+    this.tick();
   }
 
   ngOnDestroy(): void {
@@ -70,6 +76,14 @@ export class KeyVelControllerComponent implements OnInit, OnDestroy, AfterViewIn
 
     this.destroy$.next();
     this.destroy$.complete();
+  }
+
+  subscribeRobotPose() {
+    this.rosDataService.subscribe('/amcl_pose', 'geometry_msgs/PoseWithCovarianceStamped', (pose) => {
+      this.robotPosX = pose.pose.pose.position.x;
+      this.robotPosY = pose.pose.pose.position.y;
+      this.robotPosZ = pose.pose.pose.orientation.z;
+    });
   }
 
   /**
@@ -154,7 +168,7 @@ export class KeyVelControllerComponent implements OnInit, OnDestroy, AfterViewIn
   }
 
   private publishVelocities(): void {
-    let twistedStampedVel = {
+    let stampedTwistVel = {
       header: {
         stamp: {
           sec: 0, nanosec: 0
@@ -170,7 +184,16 @@ export class KeyVelControllerComponent implements OnInit, OnDestroy, AfterViewIn
         }
       }
     };
-    this.rosDataService.publish('compositebot_controller/cmd_vel', 'geometry_msgs/msg/TwistStamped', twistedStampedVel);
+
+    let unstampedTwistVel = {
+      linear: {
+        x: this.linearVelocity, y: 0, z: 0
+      },
+      angular: {
+        x: 0, y: 0, z: this.angularVelocity
+      }
+    }
+    this.rosDataService.publish('compositebot_controller/cmd_vel_unstamped', 'geometry_msgs/msg/Twist', unstampedTwistVel);
   }
 
 }

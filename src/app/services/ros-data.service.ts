@@ -72,6 +72,7 @@ export class RosDataService {
 
   /**
    * Render ROS map
+   * refer to: https://github.com/RobotWebTools/ros2djs/issues/39
    * @param divId 
    */
   viewRosMap(divId: string, width: number = 800, height: number = 600): void {
@@ -124,5 +125,4 @@ export class RosDataService {
 
     gridClient.rootObject.addChild(robotMarker);
   }
-
 }
