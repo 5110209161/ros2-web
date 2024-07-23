@@ -1,6 +1,7 @@
 import { AfterViewInit, Component, OnDestroy, OnInit } from '@angular/core';
 import { fromEvent, Subject, Subscription } from 'rxjs';
 import { RosDataService } from '../../services/ros-data.service';
+import * as ROS2D from 'ros2d/build/ros2d';
 
 @Component({
   selector: 'app-key-vel-controller',
