@@ -1,11 +1,13 @@
 import { AfterViewInit, Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { fromEvent, map, Subject, Subscription } from 'rxjs';
 import { RosDataService } from '../../services/ros-data.service';
+import { CdkDragDrop, CdkDropList, CdkDrag, moveItemInArray } from '@angular/cdk/drag-drop';
+import {MatButtonModule} from '@angular/material/button';
 
 @Component({
   selector: 'app-key-vel-controller',
   standalone: true,
-  imports: [],
+  imports: [CdkDropList, CdkDrag, MatButtonModule],
   templateUrl: './key-vel-controller.component.html',
   styleUrl: './key-vel-controller.component.scss'
 })
@@ -35,9 +37,11 @@ export class KeyVelControllerComponent implements OnInit, OnDestroy, AfterViewIn
   mousePosX: number = 0;
   mousePosY: number = 0;
 
-  robotPosX: number = 0;
-  robotPosY: number = 0;
-  robotPosZ: number = 0;
+  robotPosX: string;
+  robotPosY: string;
+  robotPosZ: string;
+
+  waypoints = [];
 
   constructor(
     private rosDataService: RosDataService
@@ -78,11 +82,24 @@ export class KeyVelControllerComponent implements OnInit, OnDestroy, AfterViewIn
     this.destroy$.complete();
   }
 
-  subscribeRobotPose() {
+  drop(event: CdkDragDrop<string[]>) {
+    moveItemInArray(this.waypoints, event.previousIndex, event.currentIndex);
+  }
+
+  addWaypoint() {
+    this.waypoints.push({
+      name: 'Waypoint ' + (this.waypoints.length + 1),
+      x: this.robotPosX || '0',
+      y: this.robotPosY || '0',
+      z: this.robotPosZ || '0',
+    });
+  }
+
+  private subscribeRobotPose() {
     this.rosDataService.subscribe('/amcl_pose', 'geometry_msgs/PoseWithCovarianceStamped', (pose) => {
-      this.robotPosX = pose.pose.pose.position.x;
-      this.robotPosY = pose.pose.pose.position.y;
-      this.robotPosZ = pose.pose.pose.orientation.z;
+      this.robotPosX = Number(pose.pose.pose.position.x).toFixed(2);
+      this.robotPosY = Number(pose.pose.pose.position.y).toFixed(2);
+      this.robotPosZ = Number(pose.pose.pose.orientation.z).toFixed(2);
     });
   }
 

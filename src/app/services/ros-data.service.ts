@@ -75,7 +75,7 @@ export class RosDataService {
    * refer to: https://github.com/RobotWebTools/ros2djs/issues/39
    * @param divId 
    */
-  viewRosMap(divId: string, width: number = 800, height: number = 600): void {
+  viewRosMap(divId: string, width: number = 600, height: number = 400): void {
     if (!this.rosServer) {
       throw Error('ROS server not connected');
     }

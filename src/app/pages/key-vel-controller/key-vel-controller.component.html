@@ -1,9 +1,24 @@
-<h2>Use <strong>W A S D</strong> to control Compositebot</h2>
-
-<p>Linear Velocity: {{linearVelocity}}</p>
-<p>Angular Velocity: {{angularVelocity}}</p>
-
-<!-- <canvas #canvas id="canvas"></canvas>
-<p>Mouse Position: X - {{mousePosX}}, Y - {{mousePosY}}</p> -->
-
-<div #map id="map"></div>
+<div class="content-wrapper">
+  <div class="map-container">
+    <h2>Use <strong>W A S D</strong> to control Compositebot</h2>
+    <p>Linear Velocity: {{linearVelocity}}</p>
+    <p>Angular Velocity: {{angularVelocity}}</p>
+    <!-- <canvas #canvas id="canvas"></canvas>
+    <p>Mouse Position: X - {{mousePosX}}, Y - {{mousePosY}}</p> -->
+    <div #map id="map"></div>
+  </div>
+  <div class="waypoint-container">
+    <section class="button-group">
+      <button mat-stroked-button (click)="addWaypoint()">Add Waypoint</button>
+      <!-- <button mat-stroked-button>Del Waypoint</button> -->
+      <button mat-stroked-button>Navigate</button>
+    </section>
+    <div cdkDropList class="waypoint-list" (cdkDropListDropped)="drop($event)">
+      @for (waypoint of waypoints; track waypoint) {
+        <div class="item-box" cdkDrag>
+          <div>{{ waypoint.name }} : x: {{ waypoint.x }} / y: {{ waypoint.y }} / z: {{ waypoint.z }}</div>
+        </div>
+      }
+    </div>
+  </div>
+</div>
