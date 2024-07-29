@@ -11,7 +11,7 @@
     <section class="button-group">
       <button mat-stroked-button (click)="addWaypoint()">Add Waypoint</button>
       <!-- <button mat-stroked-button>Del Waypoint</button> -->
-      <button mat-stroked-button>Navigate</button>
+      <button mat-stroked-button (click)="followWaypoints()">Follow Waypoints</button>
     </section>
     <div cdkDropList class="waypoint-list" (cdkDropListDropped)="drop($event)">
       @for (waypoint of waypoints; track waypoint) {

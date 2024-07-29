@@ -40,6 +40,8 @@ export class KeyVelControllerComponent implements OnInit, OnDestroy, AfterViewIn
   robotPosX: string;
   robotPosY: string;
   robotPosZ: string;
+  robotPose: any;
+  robotWaypoints = [];
 
   waypoints = [];
 
@@ -94,6 +96,13 @@ export class KeyVelControllerComponent implements OnInit, OnDestroy, AfterViewIn
       z: this.robotPosZ || '0',
     });
     this.rosDataService.addWaypoint(this.robotPosX, this.robotPosY, this.robotPosZ);
+
+    this.robotWaypoints.push(this.robotPose);
+  }
+
+  followWaypoints() {
+    let poseArray = { poses: this.robotWaypoints };
+    this.rosDataService.publish('compositebot/nav_waypoints', 'geometry_msgs/PoseArray', poseArray);
   }
 
   private subscribeRobotPose() {
@@ -101,6 +110,7 @@ export class KeyVelControllerComponent implements OnInit, OnDestroy, AfterViewIn
       this.robotPosX = Number(pose.pose.pose.position.x).toFixed(2);
       this.robotPosY = Number(pose.pose.pose.position.y).toFixed(2);
       this.robotPosZ = Number(pose.pose.pose.orientation.z).toFixed(2);
+      this.robotPose = pose.pose.pose;
     });
   }
 
